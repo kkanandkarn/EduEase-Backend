@@ -9,7 +9,7 @@ const matchPermission = async (req, role, permission) => {
       throw new ErrorHandler(UNAUTHORIZED, "Unauthorized");
     }
     const Role = await sequelize.query(
-      `select * from roles where status != 'Deleted' and role_name=?`,
+      `select * from role where status != 'Deleted' and role=?`,
       {
         replacements: [role],
         type: sequelize.QueryTypes.SELECT,
@@ -26,7 +26,7 @@ const matchPermission = async (req, role, permission) => {
     const roleId = Role[0].id;
     const permissionId = Permission[0].id;
     const checkPermission = await sequelize.query(
-      "select * from global_user_permissions where status='Active' and permission_id = ? and role_id = ?",
+      "select * from global_role_permissions where status='Active' and permission_id = ? and role_id = ?",
       {
         replacements: [permissionId, roleId],
         type: sequelize.QueryTypes.SELECT,

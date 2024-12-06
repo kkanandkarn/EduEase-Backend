@@ -4,10 +4,12 @@ const {
   ErrorHandler,
   casbinEnforcer,
 } = require("../helper");
+const { BAD_GATEWAY } = require("../helper/status-codes");
 const { constant, camelize } = require("../utils");
 
 const { OK, UNAUTHORIZED } = statusCodes;
 const { SUCCESS, FAILURE } = constant;
+const { matchPermission } = require("./match-permission");
 
 /**
  *
@@ -32,9 +34,10 @@ const dispatcher = async (req, res, next, func, perm) => {
 
       if (!checkPerm) throw new ErrorHandler(UNAUTHORIZED, "Not permitted");
     }
+
     const data = await func(req, res, next);
 
-    if (data != null) {
+    if (data) {
       const camelData = await camelize(data);
       return res
         .status(OK)
