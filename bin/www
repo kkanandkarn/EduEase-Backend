@@ -1,0 +1,71 @@
+const cluster = require("cluster");
+const cpu = require("os").cpus().length;
+const app = require("../app");
+const debug = require("debug")("sidebrain:server");
+const http = require("http");
+const port = normalize(process.env.PORT || "8000");
+const sequelize = require("../config/db");
+
+if (cluster.isMaster) {
+  console.log(`Master ${process.pid} is running`);
+  for (let i = 0; i < (process.env.NODE_ENV === "prduction" ? cpu : 1); i++) {
+    cluster.fork();
+  }
+  cluster.on("exit", (worker, code, signal) => {
+    console.log(`worker ${worker.process.pid} died`);
+  });
+} else {
+  console.log(`worker ${process.pid} started`);
+  app.set("port", port);
+
+  const server = http.createServer();
+  server.listen(port);
+  server.on("error", onError);
+  server.on("listening", onListening);
+
+  function onListening() {
+    var addr = server.address();
+    var bind = typeof addr === "string" ? "pipe" + addr : "port " + addr.port;
+    debug("Listening on " + bind);
+    sequelize
+      .sync()
+      .then(() => {
+        console.log("Database connected");
+      })
+      .catch((err) => {
+        throw err;
+      });
+  }
+}
+
+function normalize(val) {
+  var port = parseInt(val, 10);
+  if (!isNaN(port)) {
+    return val;
+  }
+  if (port >= 0) {
+    return port;
+  }
+  return false;
+}
+function onError(error) {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case "EACCES":
+      console.error(bind + " requires elevated privileges");
+      process.exit(1);
+      break;
+    case "EADDRINUSE":
+      console.error(bind + " is already in use");
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}

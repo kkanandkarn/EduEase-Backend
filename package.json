@@ -1,0 +1,45 @@
+{
+  "name": "edu-ease-backend",
+	"version": "1.0.0",
+	"description": "",
+	"main": "app.js",
+	"scripts": {
+		"start:dev": "set NODE_ENV=development&&nodemon ./bin/www"
+	},
+
+	"author": "Anand Kumar Karn",
+	"license": "ISC",
+
+  "dependencies": {
+		"bcryptjs": "^2.4.3",
+		"body-parser": "^1.20.1",
+		"camelcase-keys": "^8.0.2",
+		"clamscan": "^2.1.2",
+		"cls-hooked": "^4.2.2",
+		"cors": "^2.8.5",
+		"crypto": "^1.0.1",
+		"csv-parser": "^3.0.0",
+		"dotenv": "^16.0.3",
+		"ejs": "^3.1.10",
+		"express": "^4.18.2",
+		"formidable": "^2.1.1",
+		"helmet": "^6.0.1",
+		"humps": "^2.0.1",
+		"joi": "^17.7.0",
+		"jsonwebtoken": "^9.0.0",
+		"moment-timezone": "^0.5.40",
+		"morgan": "^1.10.0",
+		"mysql2": "^3.1.0",
+		"nodemailer": "^6.9.1",
+		"pagi-help": "^1.0.20",
+		"pino": "^8.20.0",
+		"pino-http": "^9.0.0",
+		"pino-pretty": "^11.0.0",
+		"puppeteer": "^23.3.0",
+		"sequelize": "^6.28.0",
+		"xlsx": "^0.18.5"
+	},
+	"devDependencies": {
+		"plop": "^3.1.1"
+	}
+}
