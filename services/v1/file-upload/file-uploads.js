@@ -12,9 +12,8 @@ const { SERVER_ERROR_MSG, ROLE } = require("../../../utils/constant");
 const path = require("path");
 const { randomUpload } = require("./upload-to-cloud");
 
-const fileUpload = async (files) => {
+const fileUpload = async (req, files, programCode) => {
   try {
-    const programCode = req.body.programCode;
     if (!programCode) {
       throw new ErrorHandler(BAD_GATEWAY, "Program code is required.");
     }
@@ -27,7 +26,7 @@ const fileUpload = async (files) => {
         if (Array.isArray(file)) {
           uploadedFiles = await handleMultipleFiles(req, files, programCode);
         } else {
-          uploadedFiles = await singleFileUpload(req, files);
+          uploadedFiles = await singleFileUpload(req, files, programCode);
         }
       })
     );
@@ -65,10 +64,8 @@ async function getDocumentList(documentType) {
   }
 }
 
-async function singleFileUpload(req, files) {
+async function singleFileUpload(req, files, programCode) {
   try {
-    const programCode = req.query.programCode;
-
     const userId = req.user.userId;
     if (!programCode) {
       throw new ErrorHandler(BAD_GATEWAY, "Program code is required.");
@@ -107,6 +104,7 @@ async function singleFileUpload(req, files) {
             );
           } else {
             const { name, path, url, mimeType, size } = await randomUpload(
+              req,
               files,
               document.type
             );
@@ -207,6 +205,7 @@ async function handleMultipleFiles(req, files, programCode) {
               document: file,
             };
             const { name, path, url, mimeType, size } = await randomUpload(
+              req,
               parameter,
               "document"
             );

@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const users = require("../helper/users");
 
 module.exports = function (id, role, tenant) {
   return jwt.sign(

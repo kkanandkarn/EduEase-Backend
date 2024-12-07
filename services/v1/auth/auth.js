@@ -5,24 +5,22 @@ const {
   NOT_FOUND,
   UNAUTHORIZED,
 } = require("../../../helper/status-codes");
+const { transactionFunction } = require("../../../helper/transaction");
 
 const { SERVER_ERROR_MSG, status } = require("../../../utils/constant");
 const { compare } = require("../../../utils/hash");
+const token = require("../../../utils/token");
 
 const login = async (req) => {
   try {
-    const { email, password } = req.body;
-    const [user] = await sequelize.query(
-      `select u.*, t.*, r.*, ud.file_name, file_url from users u LEFT JOIN tenants t on t.id = u.tenant_id LEFT JOIN role r on r.id = u.role_id LEFT JOIN uploaded_documents
-      ud on ud.id = t.tenant_logo where u.email =?`,
-      {
-        replacements: [email],
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-    if (!user) {
+    const { password } = req.body;
+
+    const data = await transactionFunction("GET-USER-DATA", req.body);
+
+    if (!data.length) {
       throw new ErrorHandler(NOT_FOUND, "User with this email not found.");
     }
+    let user = data[0];
     if (user.status === status.SUSPENDED || user.status === status.DELETED) {
       throw new ErrorHandler(
         UNAUTHORIZED,
@@ -35,13 +33,22 @@ const login = async (req) => {
       throw new ErrorHandler(UNAUTHORIZED, "Invalid password");
     }
 
+    const globalRolePermissions = await transactionFunction(
+      "GET-ROLE-PERMISSIONS",
+      { roleId: user.role_id }
+    );
+
+    const keysToRemove = ["password"];
+
+    user = Object.fromEntries(
+      Object.entries(user).filter(([key]) => !keysToRemove.includes(key))
+    );
+
     return {
       message: "Login Successfully",
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      tenantName: user.tenant_name,
-      tenant_logo: { fileName: user.file_name, fileUrl: user.file_url },
+      user: user,
+      token: token(user.user_id, user.role, user.tenant_id),
+      globalRolePermissions: globalRolePermissions,
     };
   } catch (error) {
     if (error.statusCode) {

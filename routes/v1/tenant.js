@@ -4,7 +4,7 @@ const { tenant } = require("../../controller/v1");
 const { PERMISSIONS } = require("../../utils/constant");
 const router = express.Router();
 
-router.post("/login", (req, res, next) =>
+router.post("/create-tenant", (req, res, next) =>
   dispatcher(
     req,
     res,

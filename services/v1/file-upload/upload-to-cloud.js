@@ -38,9 +38,9 @@ const formidableUpload = async (req) => {
   }
 };
 
-const randomUpload = async (files, key = "document") => {
+const randomUpload = async (req, files, key = "document") => {
   try {
-    const tenantId = req.body.tenant;
+    const tenantId = req.user.tenant;
     const folderPath = path.join(`${FILE_UPLOAD_PATH}/${tenantId}`);
 
     if (!fs.existsSync(folderPath)) {
@@ -52,7 +52,7 @@ const randomUpload = async (files, key = "document") => {
     let fileName = uniqueId + path.extname(files[key].originalFilename);
     await fsPromises.copyFile(files[key].filepath, `${folderPath}/${fileName}`);
 
-    const url = `${process.env.BACKEND_URL}/uploads/${fileName}`;
+    const url = `${process.env.BACKEND_URL}/uploads/${tenantId}/${fileName}`;
     const filePath = `uploads/${fileName}`;
 
     const fileSize = parseFloat((files[key].size / 1024 / 1024).toFixed(2));
@@ -73,6 +73,20 @@ const randomUpload = async (files, key = "document") => {
     throw new ErrorHandler(SERVER_ERROR, SERVER_ERROR_MSG);
   }
 };
+
+async function generateUniqueId() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  const milliseconds = String(now.getMilliseconds()).padStart(3, "0");
+  const uniqueId = `${year}-${month}-${day}-${hours}-${minutes}-${seconds}-${milliseconds}`;
+
+  return uniqueId;
+}
 
 module.exports = {
   formidableUpload,
