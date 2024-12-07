@@ -32,7 +32,7 @@ const createTenant = async (req) => {
     fields.createdBy = userId;
     fields.updatedBy = userId;
 
-    // await transactionFunction("INSERT-TENANT-DETAILS", fields);
+    await transactionFunction("INSERT-TENANT-DETAILS", fields);
     const tenants = await transactionFunction("GET-TENANTS");
 
     return { message: "Tenant created successfully", tenants: tenants };
