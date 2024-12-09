@@ -1,6 +1,7 @@
 const sequelize = require("../config/db");
 const { ErrorHandler } = require("../helper");
 const { UNAUTHORIZED, SERVER_ERROR } = require("../helper/status-codes");
+const { transactionFunction } = require("../helper/transaction");
 const { SERVER_ERROR_MSG } = require("../utils/constant");
 
 const matchPermission = async (req, role, permission) => {
@@ -8,33 +9,33 @@ const matchPermission = async (req, role, permission) => {
     if (!req.user.isAuth) {
       throw new ErrorHandler(UNAUTHORIZED, "Unauthorized");
     }
-    const Role = await sequelize.query(
-      `select * from role where status != 'Deleted' and role=?`,
-      {
-        replacements: [role],
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-    const Permission = await sequelize.query(
-      "select id from global_permissions_master where status='Active' and permission_name	= ?",
-      {
-        replacements: [permission],
-        type: sequelize.QueryTypes.SELECT,
-      }
+    const tenantId = req.user.tenant;
+
+    const Permission = await transactionFunction("GET-PERMISSION-BY-NAME", {
+      permission: permission,
+    });
+    const permissionId = Permission[0].id;
+
+    const checkTenantPermission = await transactionFunction(
+      "MATCH-TENANT-PERMISSION",
+      { tenantId: tenantId, permissionId: permissionId }
     );
 
+    if (!checkTenantPermission.length) {
+      return checkTenantPermission.length;
+    }
+
+    const Role = await transactionFunction("GET-ROLE-BY-NAME", { role: role });
     const roleId = Role[0].id;
-    const permissionId = Permission[0].id;
-    const checkPermission = await sequelize.query(
-      "select * from global_role_permissions where status='Active' and permission_id = ? and role_id = ?",
-      {
-        replacements: [permissionId, roleId],
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
+
+    const checkPermission = await transactionFunction("MATCH-ROLE-PERMISSION", {
+      permissionId: permissionId,
+      roleId: roleId,
+    });
 
     return checkPermission.length;
   } catch (error) {
+    await transaction.rollback();
     if (error.statusCode) {
       throw new ErrorHandler(error.statusCode, error.message);
     }

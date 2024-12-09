@@ -1,5 +1,6 @@
 const sequelize = require("../config/db");
 const { SERVER_ERROR_MSG } = require("../utils/constant");
+const { formatTime } = require("../utils/format-time");
 const { ErrorHandler } = require("./error-handler");
 const { SERVER_ERROR } = require("./status-codes");
 
@@ -23,6 +24,7 @@ const transactionFunction = async (
     if (transaction) {
       sysQueryObj.transaction = transaction;
     }
+
     const [sysQuery] = await sequelize.query(
       `select query, replacement_keys, query_type from sys_query where program_code = ? and status != "Deleted"`,
       sysQueryObj
@@ -52,7 +54,11 @@ const transactionFunction = async (
     }
 
     const query = sysQuery.query;
-    const data = await sequelize.query(query, queryObj);
+    let data = await sequelize.query(query, queryObj);
+    if (queryObj.type === "SELECT") {
+      data = await formatTime(data);
+    }
+
     return data;
   } catch (error) {
     if (error.statusCode) {

@@ -10,6 +10,10 @@ module.exports = {
     DELETED: "Deleted",
   },
   PERMISSIONS: {
-    CREATE_TENANT: "CREATE-TENANT",
+    TENANT: {
+      CREATE: "CREATE-TENANT",
+      VIEW: "VIEW-TENANT",
+      UPDATE: "UPDATE-TENANT",
+    },
   },
 };

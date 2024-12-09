@@ -25,6 +25,13 @@ const schemas = {
         "any.required": "Password is required.",
       }),
   }),
+  tenant_view_tenant_by_id_post: Joi.object({
+    id: Joi.number().integer().positive().required().messages({
+      "number.base": "id must be a number",
+      "number.positive": "id be a positive number",
+      "any.required": "id is required",
+    }),
+  }),
 };
 
 const validator = (req, res, next) => {

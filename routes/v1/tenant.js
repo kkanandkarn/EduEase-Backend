@@ -10,7 +10,34 @@ router.post("/create-tenant", (req, res, next) =>
     res,
     next,
     tenant.createTenantController,
-    PERMISSIONS.CREATE_TENANT
+    PERMISSIONS.TENANT.CREATE
+  )
+);
+router.post("/view-tenants", (req, res, next) =>
+  dispatcher(
+    req,
+    res,
+    next,
+    tenant.viewTenantsController,
+    PERMISSIONS.TENANT.VIEW
+  )
+);
+router.post("/view-tenant-by-id", (req, res, next) =>
+  dispatcher(
+    req,
+    res,
+    next,
+    tenant.viewTenantByIdController,
+    PERMISSIONS.TENANT.VIEW
+  )
+);
+router.put("/update-tenant", (req, res, next) =>
+  dispatcher(
+    req,
+    res,
+    next,
+    tenant.updateTenantController,
+    PERMISSIONS.TENANT.UPDATE
   )
 );
 
