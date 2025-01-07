@@ -53,7 +53,7 @@ const randomUpload = async (req, files, key = "document") => {
     await fsPromises.copyFile(files[key].filepath, `${folderPath}/${fileName}`);
 
     const url = `${process.env.BACKEND_URL}/uploads/${tenantId}/${fileName}`;
-    const filePath = `uploads/${fileName}`;
+    const filePath = `${tenantId}/${fileName}`;
 
     const fileSize = parseFloat((files[key].size / 1024 / 1024).toFixed(2));
 
@@ -91,4 +91,5 @@ async function generateUniqueId() {
 module.exports = {
   formidableUpload,
   randomUpload,
+  generateUniqueId,
 };

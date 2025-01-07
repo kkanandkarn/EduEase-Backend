@@ -4,11 +4,12 @@ const { UNAUTHORIZED, SERVER_ERROR } = require("../helper/status-codes");
 const { transactionFunction } = require("../helper/transaction");
 const { SERVER_ERROR_MSG } = require("../utils/constant");
 
-const matchPermission = async (req, role, permission) => {
+const matchPermission = async (req, permission) => {
   try {
     if (!req.user.isAuth) {
       throw new ErrorHandler(UNAUTHORIZED, "Unauthorized");
     }
+    const role = req.user.role;
     const tenantId = req.user.tenant;
 
     const Permission = await transactionFunction("GET-PERMISSION-BY-NAME", {
@@ -24,13 +25,11 @@ const matchPermission = async (req, role, permission) => {
     if (!checkTenantPermission.length) {
       return checkTenantPermission.length;
     }
-
-    const Role = await transactionFunction("GET-ROLE-BY-NAME", { role: role });
-    const roleId = Role[0].id;
+    console.log(role);
 
     const checkPermission = await transactionFunction("MATCH-ROLE-PERMISSION", {
       permissionId: permissionId,
-      roleId: roleId,
+      roleId: role,
     });
 
     return checkPermission.length;

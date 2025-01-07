@@ -14,10 +14,14 @@ const { v1 } = require("./routes");
 const sequelize = require("./config/db");
 
 const app = express();
+const { FILE_UPLOAD_PATH, FILE_GENERATED_PATH } = process.env;
+
+app.use("/uploads", express.static(path.resolve(FILE_UPLOAD_PATH)));
+app.use("/files", express.static(path.resolve(FILE_GENERATED_PATH)));
 
 app
-  .use(morganLogger)
   .use(cors())
+  .use(morganLogger)
   .use(helmet())
   .use(
     bodyParser.urlencoded({

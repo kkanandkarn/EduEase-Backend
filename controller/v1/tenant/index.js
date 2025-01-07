@@ -3,6 +3,7 @@ const {
   viewTenantsController,
   viewTenantByIdController,
   updateTenantController,
+  getTenantPermisisonsController,
 } = require("./tenant");
 
 module.exports = {
@@ -10,4 +11,5 @@ module.exports = {
   viewTenantsController,
   viewTenantByIdController,
   updateTenantController,
+  getTenantPermisisonsController,
 };

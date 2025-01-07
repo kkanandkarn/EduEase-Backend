@@ -40,5 +40,8 @@ router.put("/update-tenant", (req, res, next) =>
     PERMISSIONS.TENANT.UPDATE
   )
 );
+router.post("/permissions", (req, res, next) =>
+  dispatcher(req, res, next, tenant.getTenantPermisisonsController)
+);
 
 module.exports = router;

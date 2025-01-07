@@ -30,7 +30,7 @@ const dispatcher = async (req, res, next, func, perm) => {
     const { user } = req;
 
     if (perm) {
-      const checkPerm = await matchPermission(req, user.role, perm);
+      const checkPerm = await matchPermission(req, perm);
 
       if (!checkPerm) throw new ErrorHandler(UNAUTHORIZED, "Not permitted");
     }
