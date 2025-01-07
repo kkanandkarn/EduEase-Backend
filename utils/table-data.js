@@ -5,13 +5,17 @@ const { transactionFunction } = require("../helper/transaction");
 const { SERVER_ERROR_MSG } = require("./constant");
 const sequelize = require("../config/db");
 
-const getTableData = async (req, programCode) => {
+const getTableData = async (req, programCode, replacements) => {
   try {
+    if (!req.body.search) {
+      req.body.search = "";
+    }
     const { tableHeaders, tableName, tableColumnList, tableSearchColumnList } =
       await tableConditions(programCode);
 
     const { additionalWhereConditions, joinQuery } = await additionalQuery(
-      programCode
+      programCode,
+      replacements
     );
 
     let paginationArr = [];
@@ -89,7 +93,7 @@ async function tableConditions(programCode) {
   }
 }
 
-async function additionalQuery(programCode) {
+async function additionalQuery(programCode, replacement) {
   try {
     const replacements = { programCode: programCode };
     const additionalWhereConditions = [];
@@ -105,6 +109,12 @@ async function additionalQuery(programCode) {
         if (whereCondition.operator === "IN") {
           const condition = JSON.parse(whereCondition.condition);
           query.push(whereCondition.column, whereCondition.operator, condition);
+        } else if (whereCondition.condition === "{replacements}") {
+          query.push(
+            whereCondition.column,
+            whereCondition.operator,
+            replacement
+          );
         } else {
           query.push(
             whereCondition.column,

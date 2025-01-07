@@ -12,9 +12,15 @@ const schemas = require("../../../utils/schema");
 const { transactionFunction } = require("../../../helper/transaction");
 const { getTableData } = require("../../../utils/table-data");
 
+const sequelize = require("../../../config/db");
+const { moveUploadedFile } = require("../file-upload/move-uplaod-file");
+const { addTenantPermissions } = require("./permissions");
+
 const createTenant = async (req) => {
+  const transaction = await sequelize.transaction();
   try {
     const { files, fields } = await formidableUpload(req);
+
     const userId = req.user.userId;
     if (!files["tenantLogo"]) {
       throw new ErrorHandler(BAD_GATEWAY, "Tenant logo is required.");
@@ -23,6 +29,7 @@ const createTenant = async (req) => {
     const schema = schemas["tenant_create_tenant_post"];
     const { error } = schema.validate(fields);
     if (error) throw new ErrorHandler(BAD_GATEWAY, error.message);
+    const { tenantPermissions } = fields;
 
     const checkTenant = await transactionFunction("GET-TENANT-BY-NAME", fields);
     if (checkTenant.length) {
@@ -34,11 +41,22 @@ const createTenant = async (req) => {
     fields.createdBy = userId;
     fields.updatedBy = userId;
 
-    await transactionFunction("INSERT-TENANT-DETAILS", fields);
-    const tenants = await transactionFunction("GET-TENANTS");
+    const [tenantId, _] = await transactionFunction(
+      "INSERT-TENANT-DETAILS",
+      fields
+    );
 
-    return { message: "Tenant created successfully", tenants: tenants };
+    await addTenantPermissions(
+      req,
+      tenantId,
+      tenantPermissions.map(Number),
+      transaction
+    );
+    await moveUploadedFile(uploadedFile[0], tenantId, transaction);
+    await transaction.commit();
+    return { message: "Tenant created successfully", tenantId: tenantId };
   } catch (error) {
+    await transaction.rollback();
     if (error.statusCode) {
       throw new ErrorHandler(error.statusCode, error.message);
     }
@@ -70,9 +88,17 @@ const viewTenants = async (req) => {
 const viewTenantById = async (req) => {
   try {
     const [tenant] = await transactionFunction("GET-TENANT-BY-ID", req.body);
+
     if (!tenant) {
       throw new ErrorHandler(NOT_FOUND, "Tenant not found");
     }
+    const tenantPermissions = await transactionFunction(
+      "GET-TENANT-PERMISSIONS",
+      req.body
+    );
+
+    tenant.permissions = tenantPermissions;
+
     return tenant;
   } catch (error) {
     if (error.statusCode) {
@@ -84,6 +110,7 @@ const viewTenantById = async (req) => {
 };
 
 const updateTenant = async (req) => {
+  const transaction = await sequelize.transaction();
   try {
     const { files, fields } = await formidableUpload(req);
     const userId = req.user.userId;
@@ -92,14 +119,15 @@ const updateTenant = async (req) => {
     const { error } = schema.validate(fields);
     if (error) throw new ErrorHandler(BAD_GATEWAY, error.message);
 
-    req.body.id = fields.id;
+    req.body.tenantId = fields.tenantId;
     const oldTenant = await viewTenantById(req);
 
     if (files["tenantLogo"]) {
       const { uploadedFile } = await fileUpload(req, files, "TENANT_DETAILS");
       fields.tenantLogo = uploadedFile[0].id;
+      await moveUploadedFile(uploadedFile[0], fields.tenantId, transaction);
     } else {
-      fields.tenantLogo = oldTenant.tenant_logo.fileId;
+      fields.tenantLogo = oldTenant.tenant_logo.file_id;
     }
 
     const checkTenant = await transactionFunction("GET-TENANT-BY-NAME", fields);
@@ -109,10 +137,51 @@ const updateTenant = async (req) => {
 
     fields.updatedBy = userId;
 
-    await transactionFunction("UPDATE-TENANT-DETAILS", fields);
-    const tenants = await transactionFunction("GET-TENANTS");
+    await transactionFunction("UPDATE-TENANT-DETAILS", fields, transaction);
+    await addTenantPermissions(
+      req,
+      fields.tenantId,
+      fields.tenantPermissions.map(Number),
+      transaction
+    );
 
-    return { message: "Tenant updated successfully", tenants: tenants };
+    await transaction.commit();
+    return {
+      message: "Tenant updated successfully",
+      tenantId: parseInt(fields.tenantId),
+    };
+  } catch (error) {
+    await transaction.rollback();
+    if (error.statusCode) {
+      throw new ErrorHandler(error.statusCode, error.message);
+    }
+    console.log(error);
+    throw new ErrorHandler(SERVER_ERROR, SERVER_ERROR_MSG);
+  }
+};
+
+const getTenantPermisisons = async (req) => {
+  try {
+    if (!req.body.tenantId) {
+      req.body.tenantId = req.user.tenant;
+    }
+    const permissions = {};
+    let getPermissions = await transactionFunction(
+      "GET-TENANT-PERMISSIONS",
+      req.body
+    );
+
+    getPermissions.forEach((permission) => {
+      if (!permissions[permission.parent]) {
+        permissions[permission.parent] = [];
+      }
+      permissions[permission.parent].push({
+        id: permission.id,
+        permission_name: permission.permission_name,
+      });
+    });
+
+    return permissions;
   } catch (error) {
     if (error.statusCode) {
       throw new ErrorHandler(error.statusCode, error.message);
@@ -127,4 +196,5 @@ module.exports = {
   viewTenants,
   viewTenantById,
   updateTenant,
+  getTenantPermisisons,
 };

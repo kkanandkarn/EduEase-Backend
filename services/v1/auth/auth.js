@@ -9,7 +9,9 @@ const { transactionFunction } = require("../../../helper/transaction");
 
 const { SERVER_ERROR_MSG, status } = require("../../../utils/constant");
 const { compare } = require("../../../utils/hash");
+const { getUniqueStateNames } = require("../../../utils/state-data");
 const token = require("../../../utils/token");
+const path = require("path");
 
 const login = async (req) => {
   try {
@@ -47,7 +49,7 @@ const login = async (req) => {
     return {
       message: "Login Successfully",
       user: user,
-      token: token(user.user_id, user.role, user.tenant_id),
+      token: token(user.user_id, user.role_id, user.tenant_id),
       globalRolePermissions: globalRolePermissions,
     };
   } catch (error) {

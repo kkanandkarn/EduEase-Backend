@@ -127,6 +127,7 @@ async function singleFileUpload(req, files, programCode) {
             );
             fileDesc["id"] = insertFile[0];
             fileDesc["fileName"] = name;
+            fileDesc["filePath"] = path;
             fileDesc[document.type] = url;
             fileDesc["mimeType"] = mimeType;
             fileDesc["fileSizeInMb"] = String(size);
@@ -149,8 +150,6 @@ async function singleFileUpload(req, files, programCode) {
 async function handleMultipleFiles(req, files, programCode) {
   try {
     let documentlist = await getDocumentList(programCode);
-
-    console.log(programCode);
 
     if (!documentlist) {
       throw new ErrorHandler(NOT_FOUND, "Program code not found.");
@@ -228,6 +227,7 @@ async function handleMultipleFiles(req, files, programCode) {
             );
             fileDesc["id"] = insertFile[0];
             fileDesc["fileName"] = name;
+            fileDesc["filePath"] = path;
             fileDesc[documentlist.type] = url;
             fileDesc["mimeType"] = mimeType;
             fileDesc["fileSizeInMb"] = String(size);

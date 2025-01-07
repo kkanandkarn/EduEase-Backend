@@ -1,8 +1,10 @@
+const { viewGLobalPermissions } = require("./permissions");
 const {
   createTenant,
   viewTenants,
   viewTenantById,
   updateTenant,
+  getTenantPermisisons,
 } = require("./tenant");
 
 module.exports = {
@@ -10,4 +12,6 @@ module.exports = {
   viewTenants,
   viewTenantById,
   updateTenant,
+  viewGLobalPermissions,
+  getTenantPermisisons,
 };
